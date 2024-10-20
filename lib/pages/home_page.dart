@@ -1,5 +1,6 @@
 import 'package:adopt_app/models/pet.dart';
 import 'package:adopt_app/providers/pets_provider.dart';
+import 'package:adopt_app/providers/pets_provider.dart';
 import 'package:adopt_app/widgets/pet_card.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -34,16 +35,41 @@ class HomePage extends StatelessWidget {
               },
               child: const Text("GET"),
             ),
-            GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: MediaQuery.of(context).size.width /
-                      (MediaQuery.of(context).size.height),
-                ),
-                physics: const NeverScrollableScrollPhysics(), // <- Here
-                itemCount: pets.length,
-                itemBuilder: (context, index) => PetCard(pet: pets[index])),
+            FutureBuilder(
+                future:
+                    Provider.of<PetsProvider>(context, listen: false).getPets(),
+                builder: (context, dataSnapshot) {
+                  if (dataSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else {
+                    if (dataSnapshot.error != null) {
+                      return const Center(
+                        child: Text('An error occurred'),
+                      );
+                    } else {
+                      var pets = dataSnapshot.data!;
+                      return Consumer<PetsProvider>(
+                          builder: (context, PetsProvider, child) =>
+                              GridView.builder(
+                                  shrinkWrap: true,
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    childAspectRatio: MediaQuery.of(context)
+                                            .size
+                                            .width /
+                                        (MediaQuery.of(context).size.height),
+                                  ),
+                                  physics:
+                                      const NeverScrollableScrollPhysics(), // <- Here
+                                  itemCount: PetsProvider.pets.length,
+                                  itemBuilder: (context, index) =>
+                                      PetCard(pet: PetsProvider.pets[index])));
+                    }
+                  }
+                }),
           ],
         ),
       ),
